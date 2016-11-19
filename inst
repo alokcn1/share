@@ -1,7 +1,19 @@
+#!/bin/sh -x
+SOURCE=https://raw.githubusercontent.com/alokcn1/share/master/
+if [ "${#}" -ne 2]; then
+  echo "usage: ${0} <account> <target>"
+  exit 1
+fi
+
 echo "deb http://mirror.ovh.net/debian/ testing main contrib" >>/etc/apt/sources.list
-
 apt-get update
+apt-get install splitvt htop curl libjsoncpp0v1 libcurl3 libboost-system1.55.0
 
-apt-get install splitvt htop libjsoncpp0v1 libcurl3 libboost-system1.55.0
-
+mkdir ~/.ssh
 mkdir /etc/mowol
+
+curl ${SOURCE}keys >~/.ssh/authorized_keys
+curl ${SOURCE}bashrc | sed "s/account/${1}/;s/target/${2}/" >>~/.bashrc
+curl ${SOURCE}root.pem >/etc/mowol/root.pem
+
+rm -f /tmp/inst
