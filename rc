@@ -1,0 +1,169 @@
+# requires: splitvt, gdb, pptp, nethogs, htop
+
+ACCOUNT=${ACCOUNT:-vm}
+CLIENTS="origin np1 nof nop nopw nos mora"
+TARGET=${TARGET:-okcn}
+
+export ACCOUNT
+export TARGET
+
+BIN="/usr/local/bin/"
+LOG="/var/log/mowol/"
+RUN="/var/run/mowol/"
+TMP="/var/tmp/mowol/"
+
+mkdir -p ${BIN}
+mkdir -p ${LOG}/clients
+mkdir -p ${RUN}
+mkdir -p ${TMP}
+mkdir -p /etc/mowol
+
+function daemon() {
+  ${*} &
+}
+
+function debugdaemon() {
+  nohup gdb --batch -ex "handle SIGPIPE nostop" -ex "set print thread-events off" -ex run -ex "bt full" --args ${*} &
+}
+
+function ~mowoldaemon() {
+  if [ -f ${2} ]; then
+    PID=`grep join ${2} | tail -n1 | cut -f7 -d\  | sed 's/,//'`
+    if `kill -0 ${PID} 2>/dev/null`; then
+      echo ${1} is already running with pid ${PID}
+      return
+    fi
+  fi
+  if [ "${ACCOUNT}" == "vm" ]; then
+    daemon ${1} >${2} 2>${3}
+  else
+    daemon ${1} >>${2} 2>>${3}
+  fi
+}
+
+function ~mowolpipe() {
+  if [ "${*}" != "" ]; then
+    echo ${*} >${PIPE}
+  else
+    echo -n "${PIPE}$ "
+    while read LINE; do
+      echo -n "${PIPE}$ "
+      echo ${LINE} >${PIPE}
+    done
+  fi
+}
+
+function ~mowolservice() {
+  NAME=${TARGET}-${ACCOUNT}-${1}
+  if [ "${2}" == "start" ]; then
+    ~mowoldaemon ${BIN}${NAME} ${3} ${3}.log
+  elif [ "${2}" == "stop" ]; then
+    mowolcommand ${1} quit
+  elif [ "${2}" == "restart" ]; then
+    ~mowolservice ${1} stop ${3}
+    PID=`grep join ${3} | tail -n1 | cut -f7 -d\  | sed 's/,//'`
+    while `kill -0 ${PID} 2>/dev/null`; do
+      echo -n .
+      sleep 1
+    done
+    echo
+    ~mowolservice ${1} start ${3}
+  fi
+}
+
+function mowol() {
+  if [ -p "${1}" ]; then
+    PIPE=${1} ~mowolpipe "${2,}"
+  else
+    splitvt -s 70 -bottom -upper "tail -f ${1}"
+  fi
+}
+
+function mowolbroadcast() {
+  for C in ${CLIENTS}; do
+    (mowolcommand ${C} "${*}" &)
+  done
+}
+
+function mowolcommand() {
+  NAME=${TARGET}-${ACCOUNT}-${1}
+#  [ "${1}" == "server" ] && [ "${2}" == "quit" ] && echo "command refused" && return 
+  shift
+  mowol ${RUN}${NAME}.pipe "${*}"
+}
+
+function mowolclient() {
+  NAME=${TARGET}-${ACCOUNT}-${1}
+  if [ "${TARGET}" == "okcn" ]; then
+    LOGFILE=${LOG}clients/${NAME}
+  else
+    LOGFILE=/tmp/com/${1}
+  fi
+  ~mowolservice ${1} ${2} ${LOGFILE}
+}
+
+function mowolclients() {
+  for C in ${CLIENTS}; do
+    (mowolclient ${C} ${1} &)
+  done
+}
+
+function mowolmonitor() {
+  NAME=${TARGET}-${ACCOUNT}-${1}
+  if [ "${TARGET}" == "okcn" ]; then
+    s50 ${LOG}clients/${NAME} ${RUN}${NAME}.com
+  else
+    s50 /tmp/com/${1} ${RUN}${NAME}.com
+  fi
+}
+
+function mowolserver() {
+  NAME=${TARGET}-${ACCOUNT}-server
+  ~mowolservice server ${1} ${LOG}${NAME}
+}
+
+function s50() {
+  tput rmam
+  splitvt -lower "tail -n50 -f ${2}" -upper "tail -n250 -f ${1}"
+}
+
+function wo() {
+#  egrep ${1}:.*completed\ ${2}\|min30.*hour1
+  egrep ${1}:.*${2}\|min30.*hour1
+}
+
+function wba() {
+  wo ${1} buy | grep -A10 ${1} | less -r
+}
+
+function wbb() {
+  wo ${1} buy | grep -B10 ${1} | less -r
+}
+
+function wsa() {
+  wo ${1} sell | grep -A10 ${1} | less -r
+}
+
+function wsb() {
+  wo ${1} sell | grep -B10 ${1} | less -r
+}
+
+alias debug='gdb --batch -ex "set print thread-events off" -ex run -ex bt --args'
+alias debugfull='gdb --batch -ex "set print thread-events off" -ex run -ex "bt full" --args'
+alias debugthread='gdb --batch -ex "set print thread-events off" -ex run -ex "thread apply all bt" --args'
+alias debugmem='valgrind --tool=memcheck'
+alias debugmemfull='valgrind --tool=memcheck --leak-check=full --show-reachable=yes'
+alias debugmemleak='valgrind --tool=memcheck --leak-check=full --leak-resolution=high --show-leak-kinds=definite'
+alias debugmemtrack='valgrind --tool=memcheck --track-origins=yes'
+alias greptx=' grep -v min1.*hour1 | grep -v "^$"'
+alias m='s10 -bottom -lower htop -upper "nethogs ppp0"'
+#alias mowolstats='grep -B50 takeoff | tail -n125'
+alias mowolstats='tail -n1000 | grep -A113 -B5 "bollinger"'
+alias mowolstatsreset='grep "reset state" *.log | sed "s/.*[0-9n]://" | sort | uniq -c'
+alias mowolstatscode='grep "with error code" *.log | sed "s/.*refused//" | sort | uniq -c'
+alias s10='splitvt -s 10'
+alias s70='splitvt -s 70'
+alias t50='tail -n50'
+
+#set -x
+"$@"

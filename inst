@@ -1,0 +1,7 @@
+echo "deb http://mirror.ovh.net/debian/ testing main contrib" >>/etc/apt/sources.list
+
+apt-get update
+
+apt-get install splitvt htop libjsoncpp0v1 libcurl3 libboost-system1.55.0
+
+mkdir /etc/mowol
