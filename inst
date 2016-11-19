@@ -6,8 +6,8 @@ if [ "${#}" -ne 2]; then
 fi
 
 echo "deb http://mirror.ovh.net/debian/ testing main contrib" >>/etc/apt/sources.list
-apt-get update
-apt-get install splitvt htop curl libjsoncpp1 libcurl3 libboost-system1.55.0
+apt-get -y update
+apt-get -y install splitvt htop curl libjsoncpp1 libcurl3 libboost-system1.55.0
 
 mkdir ~/.ssh
 mkdir /etc/mowol
