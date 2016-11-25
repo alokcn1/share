@@ -60,13 +60,15 @@ function ~mowolservice() {
   elif [ "${2}" == "stop" ]; then
     mowolcommand ${1} quit
   elif [ "${2}" == "restart" ]; then
-    ~mowolservice ${1} stop ${3}
     PID=`grep join ${3} | tail -n1 | cut -f7 -d\  | sed 's/,//'`
-    while `kill -0 ${PID} 2>/dev/null`; do
-      echo -n .
-      sleep 1
-    done
-    echo
+    if `kill -0 ${PID} 2>/dev/null`; then
+      ~mowolservice ${1} stop ${3}
+      while `kill -0 ${PID} 2>/dev/null`; do
+        echo -n .
+        sleep 1
+      done
+      echo
+    fi
     ~mowolservice ${1} start ${3}
   fi
 }

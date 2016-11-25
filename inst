@@ -9,7 +9,7 @@ if ! grep testing /etc/apt/sources.list; then
   echo "deb http://mirror.ovh.net/debian/ testing main contrib" >>/etc/apt/sources.list
 fi
 apt-get -y update
-apt-get -y remove purge libgnutls-deb0-28
+apt-get -y remove --purge libgnutls-deb0-28
 apt-get -y install splitvt htop curl libjsoncpp1 libcurl3 libboost-system1.55.0
 
 mkdir ~/.ssh
