@@ -19,26 +19,52 @@ mkdir -p ${TMP}
 mkdir -p /etc/mowol
 
 function daemon() {
-  ${*} &
+  nohup ${*} &
 }
 
 function debugdaemon() {
   nohup gdb --batch -ex "handle SIGPIPE nostop" -ex "set print thread-events off" -ex run -ex "bt full" --args ${*} &
 }
 
+function isrunning() {
+  return `kill -0 ${1} 2>/dev/null`
+}
+
 function ~mowoldaemon() {
-  if [ -f ${2} ]; then
-    PID=`grep join ${2} | tail -n1 | cut -f7 -d\  | sed 's/,//'`
-    if `kill -0 ${PID} 2>/dev/null`; then
-      echo ${1} is already running with pid ${PID}
-      return
-    fi
+  LOGFILE=$(~mowollog ${1})
+  NAME=${TARGET}-${ACCOUNT}-${1}
+  if ~mowolisrunning ${1}; then
+    echo ${1} is already running with pid $(~mowolpid ${1})
+    return
   fi
   if [ "${ACCOUNT}" == "vm" ]; then
-    daemon ${1} >${2} 2>${3}
+    daemon ${BIN}${NAME} >${LOGFILE} 2>${LOGFILE}.log
   else
-    daemon ${1} >>${2} 2>>${3}
+    daemon ${BIN}${NAME} >>${LOGFILE} 2>>${LOGFILE}.log
   fi
+}
+
+function ~mowollog() {
+  if [ "${1}" == "server" ]; then
+    echo ${LOG}${TARGET}-${ACCOUNT}-server
+  elif [ "${TARGET}" == "okcn" ]; then
+    echo ${LOG}clients/${TARGET}-${ACCOUNT}-${1}
+  else
+    echo /tmp/com/${1}
+  fi
+}
+
+function ~mowolisrunning() {
+  LOGFILE=$(~mowollog ${1})
+  if [ -f ${LOGFILE} ]; then
+    PID=$(~mowolpid ${LOGFILE})
+    return `isrunning ${PID}`
+  fi
+  return 1
+}
+
+function ~mowolpid() {
+  grep join ${1} | tail -n1 | cut -f7 -d\  | sed 's/,//'
 }
 
 function ~mowolpipe() {
@@ -54,22 +80,20 @@ function ~mowolpipe() {
 }
 
 function ~mowolservice() {
-  NAME=${TARGET}-${ACCOUNT}-${1}
   if [ "${2}" == "start" ]; then
-    ~mowoldaemon ${BIN}${NAME} ${3} ${3}.log
+    ~mowoldaemon ${1}
   elif [ "${2}" == "stop" ]; then
     mowolcommand ${1} quit
   elif [ "${2}" == "restart" ]; then
-    PID=`grep join ${3} | tail -n1 | cut -f7 -d\  | sed 's/,//'`
-    if `kill -0 ${PID} 2>/dev/null`; then
-      ~mowolservice ${1} stop ${3}
-      while `kill -0 ${PID} 2>/dev/null`; do
+    if ~mowolisrunning ${1}; then
+      ~mowolservice ${1} stop
+      while ~mowolisrunning ${1}; do
         echo -n .
         sleep 1
       done
       echo
     fi
-    ~mowolservice ${1} start ${3}
+    ~mowolservice ${1} start
   fi
 }
 
@@ -83,31 +107,34 @@ function mowol() {
 
 function mowolbroadcast() {
   for C in ${CLIENTS}; do
-    (mowolcommand ${C} "${*}" &)
+    mowolcommand ${C} "${*}"
   done
 }
 
 function mowolcommand() {
   NAME=${TARGET}-${ACCOUNT}-${1}
-#  [ "${1}" == "server" ] && [ "${2}" == "quit" ] && echo "command refused" && return 
+  if ~mowolisrunning ${1}; then
   shift
-  mowol ${RUN}${NAME}.pipe "${*}"
+    mowol ${RUN}${NAME}.pipe "${*}"
+  else
+    echo ${1} is not running
+  fi
 }
 
 function mowolclient() {
-  NAME=${TARGET}-${ACCOUNT}-${1}
-  if [ "${TARGET}" == "okcn" ]; then
-    LOGFILE=${LOG}clients/${NAME}
-  else
-    LOGFILE=/tmp/com/${1}
-  fi
-  ~mowolservice ${1} ${2} ${LOGFILE}
+  ~mowolservice ${1} ${2}
 }
 
 function mowolclients() {
+  FAIL=0
   for C in ${CLIENTS}; do
-    (mowolclient ${C} ${1} &)
+    { mowolclient ${C} ${1} >/dev/null & } 2>/dev/null
   done
+  for JOB in `jobs -p`; do
+    wait ${JOB} 2>/dev/null || let "FAIL+=1"
+    echo -n -
+  done
+  echo
 }
 
 function mowolmonitor() {
@@ -120,8 +147,7 @@ function mowolmonitor() {
 }
 
 function mowolserver() {
-  NAME=${TARGET}-${ACCOUNT}-server
-  ~mowolservice server ${1} ${LOG}${NAME}
+  ~mowolservice server ${1}
 }
 
 function s50() {
