@@ -127,12 +127,12 @@ function mowolclient() {
 }
 
 function mowolclients() {
-  FAIL=0
   for C in ${CLIENTS}; do
     { mowolclient ${C} ${1} >/dev/null & } 2>/dev/null
   done
+  mowolbroadcast selloff all
   for JOB in `jobs -p`; do
-    wait ${JOB} 2>/dev/null || let "FAIL+=1"
+    wait ${JOB} 2>/dev/null || let 1
     echo -n -
   done
   echo
@@ -177,16 +177,6 @@ function wsb() {
   wo ${1} sell | grep -B10 ${1} | less -r
 }
 
-alias debug='gdb --batch -ex "set print thread-events off" -ex run -ex bt --args'
-alias debugfull='gdb --batch -ex "set print thread-events off" -ex run -ex "bt full" --args'
-alias debugthread='gdb --batch -ex "set print thread-events off" -ex run -ex "thread apply all bt" --args'
-alias debugmem='valgrind --tool=memcheck'
-alias debugmemfull='valgrind --tool=memcheck --leak-check=full --show-reachable=yes'
-alias debugmemleak='valgrind --tool=memcheck --leak-check=full --leak-resolution=high --show-leak-kinds=definite'
-alias debugmemtrack='valgrind --tool=memcheck --track-origins=yes'
-alias greptx=' grep -v min1.*hour1 | grep -v "^$"'
-alias m='s10 -bottom -lower htop -upper "nethogs ppp0"'
-#alias mowolstats='grep -B50 takeoff | tail -n125'
 alias mowolstats='tail -n1000 | grep -A113 -B5 "bollinger"'
 alias mowolstatsreset='grep "reset state" *.log | sed "s/.*[0-9n]://" | sort | uniq -c'
 alias mowolstatscode='grep "with error code" *.log | sed "s/.*refused//" | sort | uniq -c'
