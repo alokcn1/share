@@ -1,6 +1,6 @@
 # requires: splitvt, gdb, pptp, nethogs, htop
 
-ACCOUNT=${ACCOUNT:-vm}
+ACCOUNT=${ACCOUNT:-host}
 CLIENTS="origin np1 nof nop nopw nos mora"
 TARGET=${TARGET:-okcn}
 
@@ -37,8 +37,8 @@ function ~mowoldaemon() {
     echo ${1} is already running with pid $(~mowolpid ${1})
     return
   fi
-  if [ "${ACCOUNT}" == "vm" ]; then
-    daemon ${BIN}${NAME} >${LOGFILE} 2>${LOGFILE}.log
+  if [ "${ACCOUNT}" == "host" ]; then
+    debugdaemon ${BIN}${NAME} >${LOGFILE} 2>${LOGFILE}.log
   else
     daemon ${BIN}${NAME} >>${LOGFILE} 2>>${LOGFILE}.log
   fi
