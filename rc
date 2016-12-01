@@ -42,6 +42,7 @@ function ~mowoldaemon() {
   else
     daemon ${BIN}${NAME} >>${LOGFILE} 2>>${LOGFILE}.log
   fi
+  sleep 1
 }
 
 function ~mowollog() {
