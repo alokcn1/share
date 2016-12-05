@@ -10,7 +10,9 @@ if ! grep testing /etc/apt/sources.list; then
 fi
 apt-get -y update
 apt-get -y remove --purge libgnutls-deb0-28
-apt-get -y install splitvt htop curl libjsoncpp1 libcurl3 libboost-system1.55.0
+apt-get -y install splitvt htop ntp curl libjsoncpp1 libcurl3 libboost-system1.55.0
+
+/etc/init.d/ntp start
 
 mkdir ~/.ssh
 mkdir /etc/mowol
