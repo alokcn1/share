@@ -34,7 +34,7 @@ function ~mowoldaemon() {
   LOGFILE=$(~mowollog ${1})
   NAME=${TARGET}-${ACCOUNT}-${1}
   if ~mowolisrunning ${1}; then
-    echo ${1} is already running with pid $(~mowolpid ${1})
+    echo ${1} is already running with pid $(~mowolpid ${LOGFILE})
     return
   fi
   if [ "${ACCOUNT}" == "host" ]; then
