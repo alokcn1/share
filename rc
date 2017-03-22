@@ -37,7 +37,7 @@ function ~mowoldaemon() {
     echo ${1} is already running with pid $(~mowolpid ${LOGFILE})
     return
   fi
-  if [ "${ACCOUNT}" == "host" ]; then
+  if [ "${ACCOUNT}" == "test" ]; then
     debugdaemon ${BIN}${NAME} >${LOGFILE} 2>${LOGFILE}.log
   else
     daemon ${BIN}${NAME} >>${LOGFILE} 2>>${LOGFILE}.log
@@ -48,10 +48,10 @@ function ~mowoldaemon() {
 function ~mowollog() {
   if [ "${1}" == "server" ]; then
     echo ${LOG}${TARGET}-${ACCOUNT}-server
-  elif [ "${TARGET}" == "okcn" ]; then
-    echo ${LOG}clients/${TARGET}-${ACCOUNT}-${1}
+  elif [ "${ACCOUNT}" == "test" ]; then
+    echo /tmp/test/${1}
   else
-    echo /tmp/com/${1}
+    echo ${LOG}clients/${TARGET}-${ACCOUNT}-${1}
   fi
 }
 
@@ -141,10 +141,10 @@ function mowolclients() {
 
 function mowolmonitor() {
   NAME=${TARGET}-${ACCOUNT}-${1}
-  if [ "${TARGET}" == "okcn" ]; then
-    s50 ${LOG}clients/${NAME} ${RUN}${NAME}.com
+  if [ "${ACCOUNT}" == "test" ]; then
+    s50 /tmp/test/${1} ${RUN}${NAME}.com
   else
-    s50 /tmp/com/${1} ${RUN}${NAME}.com
+    s50 ${LOG}clients/${NAME} ${RUN}${NAME}.com
   fi
 }
 
