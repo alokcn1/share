@@ -91,7 +91,7 @@ function ~mowolservice() {
       echo ${1} is running with pid $(~mowolpid ${LOGFILE})
     else
       echo ${1} is not running
-    if
+    fi
   elif [ "${2}" == "restart" ]; then
     if ~mowolisrunning ${1}; then
       ~mowolservice ${1} stop
