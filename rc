@@ -85,6 +85,13 @@ function ~mowolservice() {
     ~mowoldaemon ${1}
   elif [ "${2}" == "stop" ]; then
     mowolcommand ${1} quit
+  elif [ "${2}" == "status" ]; then
+    if ~mowolisrunning ${1}; then
+      LOGFILE=$(~mowollog ${1})
+      echo ${1} is running with pid $(~mowolpid ${LOGFILE})
+    else
+      echo ${1} is not running
+    if
   elif [ "${2}" == "restart" ]; then
     if ~mowolisrunning ${1}; then
       ~mowolservice ${1} stop
