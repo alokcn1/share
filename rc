@@ -37,7 +37,7 @@ function ~mowoldaemon() {
     echo ${1} is already running with pid $(~mowolpid ${LOGFILE})
     return
   fi
-  if [ "${ACCOUNT}" == "test" ]; then
+  if [ "${ACCOUNT}" == "test" ] || [ "${ACCOUNT}" == "host" ]; then
     debugdaemon ${BIN}${NAME} >${LOGFILE} 2>${LOGFILE}.log
   else
     daemon ${BIN}${NAME} >>${LOGFILE} 2>>${LOGFILE}.log
