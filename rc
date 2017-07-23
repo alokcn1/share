@@ -34,7 +34,7 @@ function ~mowoldaemon() {
   LOGFILE=$(~mowollog ${1})
   NAME=${TARGET}-${ACCOUNT}-${1}
   if ~mowolisrunning ${1}; then
-    echo ${1} is already running with pid $(~mowolpid ${LOGFILE})
+    echo ${1} is already running with pid $(~mowolpid ${1})
     return
   fi
   if [ "${ACCOUNT}" == "test" ] || [ "${ACCOUNT}" == "host" ]; then
@@ -58,14 +58,15 @@ function ~mowollog() {
 function ~mowolisrunning() {
   LOGFILE=$(~mowollog ${1})
   if [ -f ${LOGFILE} ]; then
-    PID=$(~mowolpid ${LOGFILE})
+    PID=$(~mowolpid ${1})
     return `isrunning ${PID}`
   fi
   return 1
 }
 
 function ~mowolpid() {
-  grep join ${1} | tail -n1 | cut -f7 -d\  | sed 's/,//'
+#  grep join ${1} | tail -n1 | cut -f7 -d\  | sed 's/,//'
+  cat ${RUN}${TARGET}-${ACCOUNT}-${1}
 }
 
 function ~mowolpipe() {
@@ -88,7 +89,7 @@ function ~mowolservice() {
   elif [ "${2}" == "status" ]; then
     if ~mowolisrunning ${1}; then
       LOGFILE=$(~mowollog ${1})
-      echo ${1} is running with pid $(~mowolpid ${LOGFILE})
+      echo ${1} is running with pid $(~mowolpid ${1})
     else
       echo ${1} is not running
     fi
@@ -136,8 +137,8 @@ function mowolclient() {
 function mowolclients() {
   for C in ${CLIENTS}; do
     { mowolclient ${C} ${1} >/dev/null & } 2>/dev/null
+    sleep 10
   done
-  sleep 10
   mowolbroadcast selloff all
   for JOB in `jobs -p`; do
     wait ${JOB} 2>/dev/null || let 1
