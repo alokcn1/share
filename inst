@@ -1,7 +1,7 @@
 #!/bin/sh -x
 SOURCE=https://raw.githubusercontent.com/alokcn1/share/master/
 if [ "${#}" -ne 2]; then
-  echo "usage: ${0} <account> <target>"
+  echo "usage: ${0} <target> <account>"
   exit 1
 fi
 
@@ -18,7 +18,7 @@ mkdir ~/.ssh
 mkdir /etc/mowol
 
 curl ${SOURCE}keys >~/.ssh/authorized_keys
-curl ${SOURCE}bashrc | sed "s/account/${1}/;s/target/${2}/" >~/.bashrc
+curl ${SOURCE}bashrc | sed "s/account/${2}/;s/target/${1}/" >~/.bashrc
 curl ${SOURCE}root.pem >/etc/mowol/root.pem
 curl ${SOURCE}logrotate >/etc/logrotate.d/mowol
 
