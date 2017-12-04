@@ -1,0 +1,15 @@
+/var/log/mowol/clients/*.log {
+  copytruncate
+  weekly
+  rotate 52
+  compress
+  missingok
+}
+
+/var/log/mowol/*.log {
+  copytruncate
+  monthly
+  rotate 12
+  compress
+  missingok
+}
