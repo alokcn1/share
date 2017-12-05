@@ -8,9 +8,9 @@ fi
 if ! grep buster /etc/apt/sources.list; then
   echo "deb http://ftp.debian.org/debian/ buster main contrib" >>/etc/apt/sources.list
 fi
-apt-get -y update
-apt-get remove --purge libgnutls-deb0-28
-apt-get -y install splitvt htop ntp curl libjsoncpp1 libcurl3 libboost-system1.55.0 logrotate
+apt-get update
+apt-get -yf remove --purge libgnutls-deb0-28
+apt-get -yf install splitvt htop ntp curl libjsoncpp1 libcurl3 libboost-system1.55.0 logrotate
 
 /etc/init.d/ntp start
 
