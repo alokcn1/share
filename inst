@@ -1,6 +1,6 @@
 #!/bin/sh -x
 SOURCE=https://raw.githubusercontent.com/alokcn1/share/master/
-if [ "${#}" -ne 2]; then
+if [ "${#}" -ne 2 ]; then
   echo "usage: ${0} <target> <account>"
   exit 1
 fi
@@ -9,7 +9,7 @@ if ! grep buster /etc/apt/sources.list; then
   echo "deb http://ftp.debian.org/debian/ buster main contrib" >>/etc/apt/sources.list
 fi
 apt-get -y update
-apt-get -y remove --purge libgnutls-deb0-28
+apt-get remove --purge libgnutls-deb0-28
 apt-get -y install splitvt htop ntp curl libjsoncpp1 libcurl3 libboost-system1.55.0 logrotate
 
 /etc/init.d/ntp start
