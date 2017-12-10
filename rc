@@ -160,6 +160,35 @@ function mowolserver() {
   ~mowolservice server ${1}
 }
 
+function mowoltail() {
+  tail -f -n1000 /var/log/mowol/clients/${TARGET}-${ACCOUNT}-${1}
+}
+
+function mowoltailcom() {
+  tail -f -n1000 /var/run/mowol/${TARGET}-${ACCOUNT}-${1}.com
+}
+
+function mowoltaillog() {
+  tail -f -n1000 /var/log/mowol/clients/${TARGET}-${ACCOUNT}-${1}.log
+}
+
+function mowoltxcons() {
+  FILE=`~mowolfile ${1}`
+  cat ${FILE} | egrep -a "transaction ${2} |ms$" | grep -a -${3:-5} "transaction ${2} "
+}
+
+function mowoltxlog() {
+  FILE=`~mowolfile ${1}`.log
+  PATTERN=`cat ${FILE} | grep -a "transaction ${2} " | sed 's/^\(.\{,17\}\).*[^a-z]\([a-z]\{5,\}[0-9
+  cat ${FILE} | egrep -a "${PATTERN}fake"
+}
+
+function mowoltx() {
+  mowoltxcons ${1} ${2} ${3}
+  echo
+  mowoltxlog ${1} ${2}
+}
+
 function s50() {
   tput rmam
   splitvt -lower "tail -n50 -f ${2}" -upper "tail -n250 -f ${1}"
