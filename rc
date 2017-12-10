@@ -179,7 +179,7 @@ function mowoltxcons() {
 
 function mowoltxlog() {
   FILE=`~mowolfile ${1}`.log
-  PATTERN=`cat ${FILE} | grep -a "transaction ${2} " | sed 's/^\(.\{,17\}\).*[^a-z]\([a-z]\{5,\}[0-9
+  PATTERN=`cat ${FILE} | grep -a "transaction ${2} " | sed 's/^\(.\{,17\}\).*[^a-z]\([a-z]\{5,\}[0-9]\+\).*transaction.*$/\1.*\2/' | sort -u | tr '\n' '|'`
   cat ${FILE} | egrep -a "${PATTERN}fake"
 }
 
