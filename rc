@@ -45,6 +45,14 @@ function ~mowoldaemon() {
   sleep 1
 }
 
+function ~mowolfile() {
+  FILE=${TARGET}-${ACCOUNT}-${1}
+  if [ ! -f ${FILE} ]; then
+    FILE=/var/log/mowol/clients/${FILE}
+  fi
+  echo ${FILE}
+}
+
 function ~mowollog() {
   if [ "${1}" == "server" ]; then
     echo ${LOG}${TARGET}-${ACCOUNT}-server
