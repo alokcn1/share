@@ -23,7 +23,8 @@ function daemon() {
 }
 
 function debugdaemon() {
-  nohup gdb --batch -ex "handle SIGPIPE nostop" -ex "set print thread-events off" -ex run -ex "bt full" --args ${*} &
+  nohup gdb --batch -ex "handle SIGPIPE nostop" -ex "set print thread-events off" \
+    -ex run -ex "bt full" --args ${*} &
 }
 
 function isrunning() {
@@ -48,7 +49,7 @@ function ~mowoldaemon() {
 function ~mowolfile() {
   FILE=${TARGET}-${ACCOUNT}-${1}
   if [ ! -f ${FILE} ]; then
-    FILE=/var/log/mowol/clients/${FILE}
+    FILE=${LOG}clients/${FILE}
   fi
   echo ${FILE}
 }
@@ -87,6 +88,21 @@ function ~mowolpipe() {
       echo ${LINE} >${PIPE}
     done
   fi
+}
+
+function ~mowolresult() {
+  FILE=`~mowolfile ${1}`
+  cat ${FILE} | grep -a "gain of ${2:-[^-]}" \
+    | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed 's/ \+/ /g' \
+    | cut -d\  -f3,5,28 | awk '{print $3"\t\t"$2"\t"$1}'
+}
+
+function ~mowolresultsorted() {
+  ~mowolresult ${1} ${2} | sort -g${2/-/r}k1
+}
+
+function ~mowolresultsummed() {
+  awk '{ print $1"\t\t"$2"\t"$3; sum += $1 } END { print sum }'
 }
 
 function ~mowolservice() {
@@ -169,15 +185,23 @@ function mowolserver() {
 }
 
 function mowoltail() {
-  tail -f -n1000 /var/log/mowol/clients/${TARGET}-${ACCOUNT}-${1}
+  if [ "${1}" == "server" ]; then
+    tail -f -n${2:-100} ${LOG}${TARGET}-${ACCOUNT}-${1}
+  else
+    tail -f -n${2:-1000} ${LOG}clients/${TARGET}-${ACCOUNT}-${1}
+  fi
 }
 
 function mowoltailcom() {
-  tail -f -n1000 /var/run/mowol/${TARGET}-${ACCOUNT}-${1}.com
+  tail -f -n${2:-100} ${RUN}${TARGET}-${ACCOUNT}-${1}.com
 }
 
 function mowoltaillog() {
-  tail -f -n1000 /var/log/mowol/clients/${TARGET}-${ACCOUNT}-${1}.log
+  if [ "${1}" == "server" ]; then
+    tail -f -n${2:-1000} ${LOG}${TARGET}-${ACCOUNT}-${1}.log
+  else
+    tail -f -n${2:-1000} ${LOG}clients/${TARGET}-${ACCOUNT}-${1}.log
+  fi
 }
 
 function mowoltxcons() {
@@ -187,7 +211,9 @@ function mowoltxcons() {
 
 function mowoltxlog() {
   FILE=`~mowolfile ${1}.log`
-  PATTERN=`cat ${FILE} | grep -a "transaction ${2} " | sed 's/^\(.\{,17\}\).*[^a-z]\([a-z]\{5,\}[0-9]\+\).*transaction.*$/\1.*\2/' | sort -u | tr '\n' '|'`
+  PATTERN=`cat ${FILE} | grep -a "transaction ${2} " \
+    | sed 's/^\(.\{,17\}\).*[^a-z]\([a-z]\{5,\}[0-9]\+\).*transaction.*$/\1.*\2/' \
+    | sort -u | tr '\n' '|'`
   cat ${FILE} | egrep -a "${PATTERN}fake"
 }
 
