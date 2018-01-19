@@ -1,7 +1,7 @@
 # requires: splitvt, gdb, pptp, nethogs, htop
 
 ACCOUNT=${ACCOUNT:-host}
-CLIENTS="origin np1 nof nop nopw nos mora"
+CLIENTS="np1 nof nop nopw nos"
 TARGET=${TARGET:-okcn}
 
 export ACCOUNT
@@ -161,7 +161,7 @@ function mowolclient() {
 function mowolclients() {
   for C in ${CLIENTS}; do
     { mowolclient ${C} ${1} >/dev/null & } 2>/dev/null
-    sleep 10
+    sleep 1
   done
   mowolbroadcast selloff all
   for JOB in `jobs -p`; do
