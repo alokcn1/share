@@ -241,8 +241,8 @@ function mowoltxlog() {
       if($0 ~ S) {
         if(match($0, S ".*transaction " tx ".*rev@")) {R=1}
         print
-        if(match($0, S ".*preuptrend.*sar ratio") {exit}
-        if(R==1 && $0 ~ S && /transaction/ && !match($0, S ".*transaction " tx))) {exit}
+        if(match($0, S ".*preuptrend.*sar ratio")) {exit}
+        if(R==1 && $0 ~ S && /transaction/ && !match($0, S ".*transaction " tx)) {exit}
       }
     }' | tac
 }
