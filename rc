@@ -8,15 +8,16 @@ export ACCOUNT
 export TARGET
 
 BIN="/usr/local/bin/"
+ETC="/etc/mowol"
 LOG="/var/log/mowol/"
 RUN="/var/run/mowol/"
 TMP="/var/tmp/mowol/"
 
 mkdir -p ${BIN}
+mkdir -p ${ETC}
 mkdir -p ${LOG}/clients
 mkdir -p ${RUN}
 mkdir -p ${TMP}
-mkdir -p /etc/mowol
 
 function daemon() {
   nohup ${*} &
@@ -92,13 +93,11 @@ function ~mowolpipe() {
 
 function ~mowolresult() {
   FILE=`~mowolfile ${1}`
-  cat ${FILE} | grep -a "gain of ${2:-[^-]}" \
-    | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed 's/ \+/ /g' \
-    | cut -d\  -f3,5,28 | awk '{print $3"\t\t"$2"\t"$1}'
+  cat ${FILE} | grep -a "gain of" | clean | sed 's/ \+/ /g' | cut -d\  -f3,5,28 | awk '{print $3"\t\t"$2"\t"$1}'
 }
 
 function ~mowolresultsorted() {
-  ~mowolresult ${1} ${2} | sort -g${2/-/r}k1
+  ~mowolresult ${1} | grep "^${2:-[^-]}" | sort -g${2/-/r}k1
 }
 
 function ~mowolresultsummed() {
@@ -180,6 +179,18 @@ function mowolmonitor() {
   fi
 }
 
+function mowolresult() {
+  ~mowolresult ${1} | grep ${2} | ~mowolresultsummed
+}
+
+function mowolresultgain() {
+  ~mowolresultsorted ${1} | ~mowolresultsummed
+}
+
+function mowolresultloss() {
+  ~mowolresultsorted ${1} - | ~mowolresultsummed
+}
+
 function mowolserver() {
   ~mowolservice server ${1}
 }
@@ -205,11 +216,10 @@ function mowoltaillog() {
 }
 
 function mowoltxcons() {
-  FILE=`~mowolfile ${1}`
-  cat ${FILE} | egrep -a "transaction ${2} |ms$" | grep -a -${3:-5} "transaction ${2} "
+  egrep -a "transaction ${1} |ms$" | grep -a -${2:-5} "transaction ${1} "
 }
 
-function mowoltxlog() {
+function mowoltxlog0() {
   FILE=`~mowolfile ${1}.log`
   PATTERN=`cat ${FILE} | grep -a "transaction ${2} " \
     | sed 's/^\(.\{,17\}\).*[^a-z]\([a-z]\{5,\}[0-9]\+\).*transaction.*$/\1.*\2/' \
@@ -217,10 +227,28 @@ function mowoltxlog() {
   cat ${FILE} | egrep -a "${PATTERN}fake"
 }
 
+function mowoltxlog() {
+  tr -d '\000' | clean | tac | awk -v tx="${1}" '
+    match($0, "transaction " tx ".*ended") || match($0, ".*transaction " tx ".*buy order [0-9]* cancelled"),
+    match($0, hook ".*preuptrend.*sar ratio") || match($0, hook ".*transaction " tx ".*rev@") {
+      if(match($0, "transaction " tx ".*ended") || match($0, ".*transaction " tx ".*buy order [0-9]* cancelled")) {
+        S=substr($3,1,length($3)-1)
+      }
+      if($0 ~ S) {
+        if(match($0, S ".*transaction " tx ".*rev@")) {R=1}
+        print
+        if(match($0, S ".*preuptrend.*sar ratio") {exit}
+        if(R==1 && $0 ~ S && /transaction/ && !match($0, S ".*transaction " tx))) {exit}
+      }
+    }' | tac
+}
+
 function mowoltx() {
-  mowoltxcons ${1} ${2} ${3}
+  FILE=`~mowolfile ${1}`
+  cat ${FILE} | mowoltxcons ${2} ${3}
   echo
-  mowoltxlog ${1} ${2}
+  cat ${FILE}.log | mowoltxlog ${2}
+#  mowoltxlog0 ${1} ${2}
 }
 
 function s50() {
@@ -249,12 +277,9 @@ function wsb() {
   wo ${1} sell | grep -B10 ${1} | less -r
 }
 
-alias mowolstats='tail -n1000 | grep -A113 -B5 "bollinger"'
+alias clean='sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"'
 alias mowolstatsreset='grep "reset state" *.log | sed "s/.*[0-9n]://" | sort | uniq -c'
 alias mowolstatscode='grep "with error code" *.log | sed "s/.*refused//" | sort | uniq -c'
-alias s10='splitvt -s 10'
-alias s70='splitvt -s 70'
-alias t50='tail -n50'
 
 #set -x
 "$@"

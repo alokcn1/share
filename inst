@@ -23,4 +23,6 @@ curl ${SOURCE}bashrc | sed "s/account/${2}/;s/target/${1}/" >~/.bashrc
 curl ${SOURCE}root.pem >/etc/mowol/root.pem
 curl ${SOURCE}logrotate >/etc/logrotate.d/mowol
 
+dd if=/dev/zero of=/swap bs=1024 count=524288 && mkswap /swap && chmod 600 /swap && swapon /swap
+
 rm -f /tmp/inst
