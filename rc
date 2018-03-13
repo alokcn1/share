@@ -220,7 +220,7 @@ function mowoltaillog() {
 }
 
 function mowoltxcons() {
-  egrep -a "transaction ${1} |ms$" | grep -a -${2:-5} "transaction ${1} "
+  egrep -a "transaction ${1} |[0-9]ms" | grep -a -${2:-5} "transaction ${1} "
 }
 
 function mowoltxlog0() {
@@ -232,7 +232,7 @@ function mowoltxlog0() {
 }
 
 function mowoltxlog() {
-  tr -d '\000' | clean | tac | awk -v tx="${1}" '
+  tr -d '\000' | clean | awk -v tx="${1}" '
     match($0, "transaction " tx ".*ended") || match($0, ".*transaction " tx ".*buy order [0-9]* cancelled"), \
       match($0, hook ".*preuptrend.*sar ratio") || match($0, hook ".*transaction " tx ".*rev@") {
       if(match($0, "transaction " tx ".*ended") || match($0, ".*transaction " tx ".*buy order [0-9]* cancelled")) {
@@ -251,7 +251,7 @@ function mowoltx() {
   FILE=`~mowolfile ${1}`
   cat ${FILE} | mowoltxcons ${2} ${3}
   echo
-  cat ${FILE}.log | mowoltxlog ${2}
+  tac ${FILE}.log | mowoltxlog ${2}
 #  mowoltxlog0 ${1} ${2}
 }
 
