@@ -199,7 +199,7 @@ function mowolserver() {
   NAME=${TARGET}-${ACCOUNT}-server
   if [ "${1}" == "upgrade" ]; then
     DATA=${TMP}${NAME}-data.json
-    rm -v ${DATA} && mowolcommand server pde && sleep 5 && [ "`tail -n1 ${DATA}`" == "]" ] && mowolserver stop
+    rm -fv ${DATA} && mowolcommand server pde && sleep 5 && [ "`tail -n1 ${DATA}`" == "]" ] && mowolserver stop
     while ~mowolisrunning server; do
       sleep 1 && echo -n .
     done
