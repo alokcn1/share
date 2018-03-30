@@ -120,12 +120,13 @@ function ~mowolservice() {
     else
       echo ${1} is not running
     fi
+  elif [ "${2}" == "reload" ]; then
+    mowolcommand ${1} reload
   elif [ "${2}" == "restart" ]; then
     if ~mowolisrunning ${1}; then
       ~mowolservice ${1} stop
       while ~mowolisrunning ${1}; do
-        echo -n .
-        sleep 1
+        sleep && echo -n .
       done
       echo
     fi
@@ -166,7 +167,6 @@ function mowolclients() {
     { mowolclient ${C} ${1} >/dev/null & } 2>/dev/null
     sleep 1
   done
-  mowolbroadcast selloff all
   for JOB in `jobs -p`; do
     wait ${JOB} 2>/dev/null || let 1
     echo -n -
@@ -196,7 +196,18 @@ function mowolresultloss() {
 }
 
 function mowolserver() {
-  ~mowolservice server ${1}
+  NAME=${TARGET}-${ACCOUNT}-server
+  if [ "${1}" == "upgrade" ]; then
+    DATA=${TMP}${NAME}-data.json
+    rm -v ${DATA} && mowolcommand server pde && sleep 5 && [ "`tail -n1 ${DATA}`" == "]" ] && mowolserver stop
+    while ~mowolisrunning server; do
+      sleep 1 && echo -n .
+    done
+    echo
+    [ "`tail -n1 ${DATA}`" == "]" ] && ${BIN}${NAME} -reset && mowolserver start && sleep 100 && mowolcommand server pdi
+  else
+    ~mowolservice server ${1}
+  fi
 }
 
 function mowoltail() {
