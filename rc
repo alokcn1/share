@@ -126,7 +126,7 @@ function ~mowolservice() {
     if ~mowolisrunning ${1}; then
       ~mowolservice ${1} stop
       while ~mowolisrunning ${1}; do
-        sleep && echo -n .
+        sleep 1 && echo -n .
       done
       echo
     fi
